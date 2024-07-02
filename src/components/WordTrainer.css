@@ -1,0 +1,50 @@
+.word-trainer {
+    margin: 20px;
+    text-align: center;
+  }
+  
+  .word-trainer h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+  }
+  
+  .word-trainer p {
+    font-size: 1.2em;
+  }
+  
+  .word-trainer input {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    width: calc(100% - 22px);
+  }
+  
+  .word-trainer button {
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: #61dafb;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+  
+  .word-trainer button:hover {
+    background-color: #21a1f1;
+  }
+  
+  .feedback {
+    font-size: 1.2em;
+    margin-top: 10px;
+  }
+  
+  .feedback.correct {
+    color: green;
+  }
+  
+  .feedback.incorrect {
+    color: red;
+  }
+  
