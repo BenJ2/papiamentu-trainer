@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './ExerciseMode.css';
 
-const exercises = [
-  {
-    explanation: 'Translate the following sentences from Papiamentu to English:',
-    sentences: [
-      { question: 'Mi ta bon.', answer: 'I am fine.' },
-      { question: 'Kon ta bai?', answer: 'How are you?' },
-      { question: 'E ta kome.', answer: 'He is eating.' },
-      // Add more sentences as needed
-    ],
-  },
-];
-
 const ExerciseMode = () => {
-  const [currentExercise] = useState(exercises[0]);
-  const [answers, setAnswers] = useState(Array(currentExercise.sentences.length).fill(''));
+  const [exercises, setExercises] = useState([]);
+  const [answers, setAnswers] = useState([]);
   const [score, setScore] = useState(null);
   const [feedback, setFeedback] = useState([]);
   const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const fetchExercises = async () => {
+      const response = await axios.get('http://localhost:5000/exercises');
+      setExercises(response.data.data);
+      setAnswers(Array(response.data.data.length).fill(''));
+    };
+    fetchExercises();
+  }, []);
 
   const handleChange = (index, value) => {
     const newAnswers = [...answers];
@@ -26,29 +24,30 @@ const ExerciseMode = () => {
     setAnswers(newAnswers);
   };
 
-  const calculateScore = () => {
+  const calculateScore = async () => {
     let newScore = 0;
     let newFeedback = [];
-    currentExercise.sentences.forEach((sentence, index) => {
-      if (sentence.answer.toLowerCase() === answers[index].toLowerCase()) {
+    exercises.forEach((exercise, index) => {
+      if (exercise.answer.toLowerCase() === answers[index].toLowerCase()) {
         newScore += 1;
         newFeedback.push('Correct!');
       } else {
-        newFeedback.push(`Incorrect! The correct answer is: ${sentence.answer}`);
+        newFeedback.push(`Incorrect! The correct answer is: ${exercise.answer}`);
       }
     });
     setScore(newScore);
     setFeedback(newFeedback);
-    setProgress(Math.round((newScore / currentExercise.sentences.length) * 100));
+    setProgress(Math.round((newScore / exercises.length) * 100));
+
+    await axios.post('http://localhost:5000/scores', { score: newScore, mode: 'exerciseMode', timestamp: new Date() });
   };
 
   return (
     <div className="exercise-mode">
       <h2>Exercise Mode</h2>
-      <p>{currentExercise.explanation}</p>
-      {currentExercise.sentences.map((sentence, index) => (
+      {exercises.map((exercise, index) => (
         <div key={index}>
-          <p>{sentence.question}</p>
+          <p>{exercise.question}</p>
           <input
             type="text"
             value={answers[index]}
@@ -60,7 +59,7 @@ const ExerciseMode = () => {
       <button onClick={calculateScore}>Submit</button>
       {score !== null && (
         <div>
-          <p>Your score: {score}/{currentExercise.sentences.length}</p>
+          <p>Your score: {score}/{exercises.length}</p>
           <div className="progress-bar">
             <div className="progress" style={{ width: `${progress}%` }}></div>
           </div>

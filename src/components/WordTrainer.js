@@ -1,60 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './WordTrainer.css';
 
-const words = [
-  { papiamentu: 'Bon dia', english: 'Good morning' },
-  { papiamentu: 'Danki', english: 'Thank you' },
-  { papiamentu: 'Ayo', english: 'Goodbye' },
-  // Add more words as needed
-];
-
 const WordTrainer = () => {
-  const [currentWord, setCurrentWord] = useState(getRandomWord());
+  const [words, setWords] = useState([]);
+  const [currentWord, setCurrentWord] = useState(null);
   const [input, setInput] = useState('');
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [incorrectWords, setIncorrectWords] = useState([]);
 
-  function getRandomWord() {
-    return words[Math.floor(Math.random() * words.length)];
-  }
+  useEffect(() => {
+    const fetchWords = async () => {
+      const response = await axios.get('http://localhost:5000/words');
+      setWords(response.data.data);
+      setCurrentWord(response.data.data[Math.floor(Math.random() * response.data.data.length)]);
+    };
+    fetchWords();
+  }, []);
 
-  const checkAnswer = () => {
+  const checkAnswer = async () => {
     if (input.toLowerCase() === currentWord.english.toLowerCase()) {
       setScore(score + 1);
       setFeedback('Correct!');
-      setCurrentWord(getRandomWord());
+      const newWord = words[Math.floor(Math.random() * words.length)];
+      setCurrentWord(newWord);
       setInput('');
     } else {
       setFeedback(`Incorrect! The correct answer is: ${currentWord.english}`);
       setIncorrectWords([...incorrectWords, currentWord]);
-      setCurrentWord(getRandomWord());
+      const newWord = words[Math.floor(Math.random() * words.length)];
+      setCurrentWord(newWord);
       setInput('');
     }
+    await axios.post('http://localhost:5000/scores', { score, mode: 'wordTrainer', timestamp: new Date() });
     setTimeout(() => setFeedback(''), 3000);
-  };
-
-  const retryIncorrectWords = () => {
-    if (incorrectWords.length > 0) {
-      setCurrentWord(incorrectWords.pop());
-      setIncorrectWords([...incorrectWords]);
-    } else {
-      setCurrentWord(getRandomWord());
-    }
   };
 
   return (
     <div className="word-trainer">
       <h2>Word Trainer</h2>
-      <p>Translate: {currentWord.papiamentu}</p>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && checkAnswer()}
-      />
-      <button onClick={checkAnswer}>Check</button>
-      <button onClick={retryIncorrectWords}>Retry Incorrect Words</button>
+      {currentWord && (
+        <div>
+          <p>Translate: {currentWord.papiamentu}</p>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && checkAnswer()}
+          />
+          <button onClick={checkAnswer}>Check</button>
+        </div>
+      )}
       <p>Score: {score}</p>
       {feedback && <p className="feedback">{feedback}</p>}
     </div>
