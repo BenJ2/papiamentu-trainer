@@ -5,13 +5,21 @@ import './LessonMode.css';
 const LessonMode = () => {
   const [lessons, setLessons] = useState([]);
   const [currentLesson, setCurrentLesson] = useState(null);
-  const [answers, setAnswers] = useState({});
+  const [remainingExercises, setRemainingExercises] = useState([]);
+  const [currentExercise, setCurrentExercise] = useState(null);
+  const [answer, setAnswer] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [incorrectAnswers, setIncorrectAnswers] = useState([]);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [reverse, setReverse] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchLessons = async () => {
-      const response = await axios.get('http://localhost:5000/lessons');
+      const response = await axios.get('https://papiamentu-trainer-backend.azurewebsites.net/lessons');
       setLessons(response.data.data);
     };
     fetchLessons();
@@ -20,37 +28,67 @@ const LessonMode = () => {
   useEffect(() => {
     if (currentLesson) {
       const fetchExercises = async () => {
-        const response = await axios.get(`http://localhost:5000/lessons/${currentLesson.id}/exercises`);
-        setCurrentLesson((prevLesson) => ({
-          ...prevLesson,
-          exercises: response.data.data,
-        }));
+        const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/exercises`);
+        const exercises = response.data.data;
+        setRemainingExercises(exercises);
+        setTotalQuestions(exercises.length);
+        if (exercises.length > 0) {
+          setRandomExercise(exercises);
+        }
       };
       fetchExercises();
     }
   }, [currentLesson]);
 
-  const handleAnswerChange = (exerciseIndex, answer) => {
-    setAnswers({
-      ...answers,
-      [exerciseIndex]: answer
-    });
+  const setRandomExercise = (exercises) => {
+    const randomIndex = Math.floor(Math.random() * exercises.length);
+    setCurrentExercise(exercises[randomIndex]);
+    const updatedExercises = exercises.filter((_, index) => index !== randomIndex);
+    setRemainingExercises(updatedExercises);
   };
 
-  const submitLesson = async () => {
-    let newScore = 0;
-    currentLesson.exercises.forEach((exercise, index) => {
-      if (answers[index] && answers[index].toLowerCase() === exercise.answer.toLowerCase()) {
-        newScore += 1;
-      }
-    });
-    setScore(newScore);
-    setSubmitted(true);
+  const handleAnswerChange = (e) => {
+    setAnswer(e.target.value);
+  };
 
-    await axios.post('http://localhost:5000/scores', {
-      mode: 'lessonMode',
-      score: newScore
-    });
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmitAnswer();
+    }
+  };
+
+  const evaluateAnswer = async (question, answer, correctAnswer) => {
+    const response = await axios.post('https://papiamentu-trainer-backend.azurewebsites.net/evaluate-answer', { question, answer, correctAnswer });
+    return response.data;
+  };
+
+  const handleSubmitAnswer = async () => {
+    setLoading(true);
+    const question = reverse ? currentExercise.answer : currentExercise.question;
+    const correctAnswer = reverse ? currentExercise.question : currentExercise.answer;
+    const result = await evaluateAnswer(question, answer, correctAnswer);
+    setFeedback(result.feedback);
+    setShowFeedback(true);
+    setLoading(false);
+    if (result.correct) {
+      setScore(score + 1);
+    } else {
+      setIncorrectAnswers([...incorrectAnswers, currentExercise]);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    setShowFeedback(false);
+    setAnswer('');
+    if (remainingExercises.length > 0) {
+      setRandomExercise(remainingExercises);
+    } else {
+      setSubmitted(true);
+    }
+  };
+
+  const toggleReverse = () => {
+    setReverse(!reverse);
   };
 
   return (
@@ -58,7 +96,17 @@ const LessonMode = () => {
       <h2>Lesson Mode</h2>
       <div className="lesson-list">
         {lessons.map((lesson, index) => (
-          <button key={index} onClick={() => setCurrentLesson(lesson)}>
+          <button 
+            key={index} 
+            onClick={() => {
+              setCurrentLesson(lesson);
+              setSubmitted(false);
+              setScore(0);
+              setIncorrectAnswers([]);
+              setReverse(false);
+            }}
+            className={`lesson-button ${currentLesson && currentLesson.id === lesson.id ? 'active' : ''}`}
+          >
             {lesson.title}
           </button>
         ))}
@@ -67,22 +115,64 @@ const LessonMode = () => {
         <div className="lesson-content">
           <h3>{currentLesson.title}</h3>
           <p>{currentLesson.description}</p>
-          {currentLesson.exercises ? (
-            currentLesson.exercises.map((exercise, index) => (
-              <div key={index} className="exercise">
-                <p>{exercise.question}</p>
-                <input
-                  type="text"
-                  onChange={(e) => handleAnswerChange(index, e.target.value)}
-                  disabled={submitted}
-                />
-              </div>
-            ))
-          ) : (
-            <p>Loading exercises...</p>
+          <div className="toggle-container">
+            <label className="toggle">
+              <input type="checkbox" checked={reverse} onChange={toggleReverse} />
+              <span className="slider"></span>
+            </label>
+            <span>{reverse ? 'Translate Dutch to Papiamentu' : 'Translate Papiamentu to Dutch'}</span>
+          </div>
+          {currentExercise && !submitted && (
+            <div className="exercise">
+              <p>{reverse ? currentExercise.answer : currentExercise.question}</p>
+              <input
+                type="text"
+                value={answer}
+                onChange={handleAnswerChange}
+                onKeyPress={handleKeyPress}
+                disabled={showFeedback || loading}
+              />
+              <button onClick={handleSubmitAnswer} disabled={showFeedback || loading}>
+                {loading ? 'Loading...' : 'Submit'}
+              </button>
+              {showFeedback && (
+                <div>
+                  <p className="feedback">{feedback}</p>
+                  <button onClick={handleNextQuestion}>Next Question</button>
+                </div>
+              )}
+            </div>
           )}
-          {!submitted && <button onClick={submitLesson}>Submit</button>}
-          {submitted && <p>Your score: {score}/{currentLesson.exercises ? currentLesson.exercises.length : 0}</p>}
+          {submitted && (
+            <div>
+              <p>Your score: {score}/{totalQuestions}</p>
+              {incorrectAnswers.length > 0 && (
+                <div>
+                  <h4>Review Incorrect Answers</h4>
+                  {incorrectAnswers.map((exercise, index) => (
+                    <div key={index} className="exercise">
+                      <p>{exercise.question}</p>
+                      <p>Correct Answer: {exercise.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="question-summary">
+            <div className="summary-item">
+              <p>Total Questions: {totalQuestions}</p>
+            </div>
+            <div className="summary-item correct">
+              <p>Correct Answers: {score}</p>
+            </div>
+            <div className="summary-item incorrect">
+              <p>Incorrect Answers: {incorrectAnswers.length}</p>
+            </div>
+            <div className="summary-item remaining">
+              <p>Remaining Questions: {remainingExercises.length+1}</p>
+            </div>
+          </div>
         </div>
       )}
     </div>

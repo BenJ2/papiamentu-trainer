@@ -11,7 +11,7 @@ const ExerciseMode = () => {
 
   useEffect(() => {
     const fetchExercises = async () => {
-      const response = await axios.get('http://localhost:5000/exercises');
+      const response = await axios.get('https://papiamentu-trainer-backend.azurewebsites.net/exercises');
       setExercises(response.data.data);
       setAnswers(Array(response.data.data.length).fill(''));
     };
@@ -39,7 +39,7 @@ const ExerciseMode = () => {
     setFeedback(newFeedback);
     setProgress(Math.round((newScore / exercises.length) * 100));
 
-    await axios.post('http://localhost:5000/scores', { score: newScore, mode: 'exerciseMode', timestamp: new Date() });
+    await axios.post('https://papiamentu-trainer-backend.azurewebsites.net/scores', { score: newScore, mode: 'exerciseMode', timestamp: new Date() });
   };
 
   return (

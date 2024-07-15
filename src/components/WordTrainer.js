@@ -12,7 +12,7 @@ const WordTrainer = () => {
 
   useEffect(() => {
     const fetchWords = async () => {
-      const response = await axios.get('http://localhost:5000/words');
+      const response = await axios.get('https://papiamentu-trainer-backend.azurewebsites.net/words');
       setWords(response.data.data);
       setCurrentWord(response.data.data[Math.floor(Math.random() * response.data.data.length)]);
     };
@@ -33,7 +33,7 @@ const WordTrainer = () => {
       setCurrentWord(newWord);
       setInput('');
     }
-    await axios.post('http://localhost:5000/scores', { score, mode: 'wordTrainer', timestamp: new Date() });
+    await axios.post('https://papiamentu-trainer-backend.azurewebsites.net/scores', { score, mode: 'wordTrainer', timestamp: new Date() });
     setTimeout(() => setFeedback(''), 3000);
   };
 
