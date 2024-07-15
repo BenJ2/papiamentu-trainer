@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './ExerciseMode.css';
+import './VocabularyMode.css';
 
-const ExerciseMode = () => {
+const VocabularyMode = () => {
   const [lessons, setLessons] = useState([]);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [remainingExercises, setRemainingExercises] = useState([]);
@@ -14,6 +14,7 @@ const ExerciseMode = () => {
   const [submitted, setSubmitted] = useState(false);
   const [incorrectAnswers, setIncorrectAnswers] = useState([]);
   const [totalQuestions, setTotalQuestions] = useState(0);
+  const [reverse, setReverse] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,17 +28,24 @@ const ExerciseMode = () => {
   useEffect(() => {
     if (currentLesson) {
       const fetchExercises = async () => {
-        const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/exercises`);
+        const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/words`);
         const exercises = response.data.data;
         setRemainingExercises(exercises);
         setTotalQuestions(exercises.length);
         if (exercises.length > 0) {
-          setCurrentExercise(exercises[0]);
+          setRandomExercise(exercises);
         }
       };
       fetchExercises();
     }
   }, [currentLesson]);
+
+  const setRandomExercise = (exercises) => {
+    const randomIndex = Math.floor(Math.random() * exercises.length);
+    setCurrentExercise(exercises[randomIndex]);
+    const updatedExercises = exercises.filter((_, index) => index !== randomIndex);
+    setRemainingExercises(updatedExercises);
+  };
 
   const handleAnswerChange = (e) => {
     setAnswer(e.target.value);
@@ -56,8 +64,8 @@ const ExerciseMode = () => {
 
   const handleSubmitAnswer = async () => {
     setLoading(true);
-    const question = currentExercise.question;
-    const correctAnswer = currentExercise.answer;
+    const question = reverse ? currentExercise.dutch : currentExercise.papiamentu;
+    const correctAnswer = reverse ? currentExercise.papiamentu : currentExercise.dutch;
     const result = await evaluateAnswer(question, answer, correctAnswer);
     setFeedback(result.feedback);
     setShowFeedback(true);
@@ -72,20 +80,20 @@ const ExerciseMode = () => {
   const handleNextQuestion = () => {
     setShowFeedback(false);
     setAnswer('');
-    if (remainingExercises.length > 1) {
-      setRemainingExercises((prevExercises) => {
-        const nextExercise = prevExercises[1];
-        setCurrentExercise(nextExercise);
-        return prevExercises.slice(1);
-      });
+    if (remainingExercises.length > 0) {
+      setRandomExercise(remainingExercises);
     } else {
       setSubmitted(true);
     }
   };
 
+  const toggleReverse = () => {
+    setReverse(!reverse);
+  };
+
   return (
     <div className="lesson-mode">
-      <h2>Exercise Mode</h2>
+      <h2>Vocabulary Mode</h2>
       <div className="lesson-list">
         {lessons.map((lesson, index) => (
           <button 
@@ -95,6 +103,7 @@ const ExerciseMode = () => {
               setSubmitted(false);
               setScore(0);
               setIncorrectAnswers([]);
+              setReverse(false);
             }}
             className={`lesson-button ${currentLesson && currentLesson.id === lesson.id ? 'active' : ''}`}
           >
@@ -106,11 +115,16 @@ const ExerciseMode = () => {
         <div className="lesson-content">
           <h3>{currentLesson.title}</h3>
           <p>{currentLesson.description}</p>
+          <div className="toggle-container">
+            <label className="toggle">
+              <input type="checkbox" checked={reverse} onChange={toggleReverse} />
+              <span className="slider"></span>
+            </label>
+            <span>{reverse ? 'Translate Dutch to Papiamentu' : 'Translate Papiamentu to Dutch'}</span>
+          </div>
           {currentExercise && !submitted && (
             <div className="exercise">
-              <p>Explanation: {currentExercise.explanation}</p>
-              <p>{currentExercise.exercise}.{currentExercise.question_number}</p>
-              <p>{currentExercise.question}</p>
+              <p>{reverse ? currentExercise.dutch : currentExercise.papiamentu}</p>
               <input
                 type="text"
                 value={answer}
@@ -137,7 +151,7 @@ const ExerciseMode = () => {
                   <h4>Review Incorrect Answers</h4>
                   {incorrectAnswers.map((exercise, index) => (
                     <div key={index} className="exercise">
-                      <p>{exercise.question}</p>
+                      <p>{exercise.papiamentu}</p>
                       <p>Correct Answer: {exercise.answer}</p>
                     </div>
                   ))}
@@ -156,7 +170,7 @@ const ExerciseMode = () => {
               <p>Incorrect Answers: {incorrectAnswers.length}</p>
             </div>
             <div className="summary-item remaining">
-              <p>Remaining Questions: {remainingExercises.length}</p>
+              <p>Remaining Questions: {remainingExercises.length+1}</p>
             </div>
           </div>
         </div>
@@ -165,4 +179,4 @@ const ExerciseMode = () => {
   );
 };
 
-export default ExerciseMode;
+export default VocabularyMode;

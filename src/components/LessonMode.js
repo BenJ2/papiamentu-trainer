@@ -28,7 +28,7 @@ const LessonMode = () => {
   useEffect(() => {
     if (currentLesson) {
       const fetchExercises = async () => {
-        const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/exercises`);
+        const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/words`);
         const exercises = response.data.data;
         setRemainingExercises(exercises);
         setTotalQuestions(exercises.length);
@@ -64,8 +64,8 @@ const LessonMode = () => {
 
   const handleSubmitAnswer = async () => {
     setLoading(true);
-    const question = reverse ? currentExercise.answer : currentExercise.question;
-    const correctAnswer = reverse ? currentExercise.question : currentExercise.answer;
+    const question = reverse ? currentExercise.dutch : currentExercise.papiamentu;
+    const correctAnswer = reverse ? currentExercise.papiamentu : currentExercise.dutch;
     const result = await evaluateAnswer(question, answer, correctAnswer);
     setFeedback(result.feedback);
     setShowFeedback(true);
@@ -124,7 +124,7 @@ const LessonMode = () => {
           </div>
           {currentExercise && !submitted && (
             <div className="exercise">
-              <p>{reverse ? currentExercise.answer : currentExercise.question}</p>
+              <p>{reverse ? currentExercise.dutch : currentExercise.papiamentu}</p>
               <input
                 type="text"
                 value={answer}
@@ -151,7 +151,7 @@ const LessonMode = () => {
                   <h4>Review Incorrect Answers</h4>
                   {incorrectAnswers.map((exercise, index) => (
                     <div key={index} className="exercise">
-                      <p>{exercise.question}</p>
+                      <p>{exercise.papiamentu}</p>
                       <p>Correct Answer: {exercise.answer}</p>
                     </div>
                   ))}
