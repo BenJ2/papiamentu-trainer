@@ -64,8 +64,8 @@ const VocabularyMode = () => {
 
   const handleSubmitAnswer = async () => {
     setLoading(true);
-    const question = reverse ? currentExercise.dutch : currentExercise.papiamentu;
-    const correctAnswer = reverse ? currentExercise.papiamentu : currentExercise.dutch;
+    const question = reverse ? currentExercise.papiamentu : currentExercise.dutch;
+    const correctAnswer = reverse ? currentExercise.dutch : currentExercise.papiamentu;
     const result = await evaluateAnswer(question, answer, correctAnswer);
     setFeedback(result.feedback);
     setShowFeedback(true);
@@ -120,11 +120,11 @@ const VocabularyMode = () => {
               <input type="checkbox" checked={reverse} onChange={toggleReverse} />
               <span className="slider"></span>
             </label>
-            <span>{reverse ? 'Translate Dutch to Papiamentu' : 'Translate Papiamentu to Dutch'}</span>
+            <span>{reverse ? 'Translate Papiamentu to Dutch' : 'Translate Dutch to Papiamentu'}</span>
           </div>
           {currentExercise && !submitted && (
             <div className="exercise">
-              <p>{reverse ? currentExercise.dutch : currentExercise.papiamentu}</p>
+              <p>{reverse ? currentExercise.papiamentu : currentExercise.dutch}</p>
               <input
                 type="text"
                 value={answer}
