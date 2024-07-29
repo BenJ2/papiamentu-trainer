@@ -16,11 +16,17 @@ const VocabularyMode = () => {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [reverse, setReverse] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [redoingIncorrectAnswers, setRedoingIncorrectAnswers] = useState(false);
 
   useEffect(() => {
     const fetchLessons = async () => {
-      const response = await axios.get('https://papiamentu-trainer-backend.azurewebsites.net/lessons');
-      setLessons(response.data.data);
+      try {
+        const response = await axios.get('https://papiamentu-trainer-backend.azurewebsites.net/lessons');
+        setLessons(response.data.data);
+      } catch (error) {
+        console.error("Error fetching lessons:", error);
+        // Handle error, e.g., show an error message or set a default state
+      }
     };
     fetchLessons();
   }, []);
@@ -28,12 +34,17 @@ const VocabularyMode = () => {
   useEffect(() => {
     if (currentLesson) {
       const fetchExercises = async () => {
-        const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/words`);
-        const exercises = response.data.data;
-        setRemainingExercises(exercises);
-        setTotalQuestions(exercises.length);
-        if (exercises.length > 0) {
-          setRandomExercise(exercises);
+        try {
+          const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/words`);
+          const exercises = response.data.data;
+          setRemainingExercises(exercises);
+          setTotalQuestions(exercises.length);
+          if (exercises.length > 0) {
+            setRandomExercise(exercises);
+          }
+        } catch (error) {
+          console.error("Error fetching exercises:", error);
+          // Handle error, e.g., show an error message or set a default state
         }
       };
       fetchExercises();
@@ -58,8 +69,14 @@ const VocabularyMode = () => {
   };
 
   const evaluateAnswer = async (question, answer, correctAnswer) => {
-    const response = await axios.post('https://papiamentu-trainer-backend.azurewebsites.net/evaluate-answer', { question, answer, correctAnswer });
-    return response.data;
+    try {
+      const response = await axios.post('https://papiamentu-trainer-backend.azurewebsites.net/evaluate-answer', { question, answer, correctAnswer });
+      return response.data;
+    } catch (error) {
+      console.error("Error evaluating answer:", error);
+      // If there's an error, assume the answer is correct to let the user continue
+      return { correct: true, feedback: "Answer assumed correct due to an error." };
+    }
   };
 
   const handleSubmitAnswer = async () => {
@@ -82,9 +99,22 @@ const VocabularyMode = () => {
     setAnswer('');
     if (remainingExercises.length > 0) {
       setRandomExercise(remainingExercises);
+    } else if (redoingIncorrectAnswers && incorrectAnswers.length > 0) {
+      setRemainingExercises(incorrectAnswers);
+      setIncorrectAnswers([]);
+      setSubmitted(false);
+      setRandomExercise(incorrectAnswers);
     } else {
       setSubmitted(true);
     }
+  };
+
+  const handleRedoIncorrectAnswers = () => {
+    setRedoingIncorrectAnswers(true);
+    setRemainingExercises(incorrectAnswers);
+    setIncorrectAnswers([]);
+    setSubmitted(false);
+    setRandomExercise(incorrectAnswers);
   };
 
   const toggleReverse = () => {
@@ -104,6 +134,7 @@ const VocabularyMode = () => {
               setScore(0);
               setIncorrectAnswers([]);
               setReverse(false);
+              setRedoingIncorrectAnswers(false);
             }}
             className={`lesson-button ${currentLesson && currentLesson.id === lesson.id ? 'active' : ''}`}
           >
@@ -155,6 +186,7 @@ const VocabularyMode = () => {
                       <p>Correct Answer: {exercise.answer}</p>
                     </div>
                   ))}
+                  <button onClick={handleRedoIncorrectAnswers}>Redo Incorrect Answers</button>
                 </div>
               )}
             </div>
@@ -170,7 +202,7 @@ const VocabularyMode = () => {
               <p>Incorrect Answers: {incorrectAnswers.length}</p>
             </div>
             <div className="summary-item remaining">
-              <p>Remaining Questions: {remainingExercises.length+1}</p>
+              <p>Remaining Questions: {remainingExercises.length + (redoingIncorrectAnswers ? 0 : 1)}</p>
             </div>
           </div>
         </div>
