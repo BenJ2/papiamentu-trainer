@@ -25,7 +25,6 @@ const VocabularyMode = () => {
         setLessons(response.data.data);
       } catch (error) {
         console.error("Error fetching lessons:", error);
-        // Handle error, e.g., show an error message or set a default state
       }
     };
     fetchLessons();
@@ -44,7 +43,6 @@ const VocabularyMode = () => {
           }
         } catch (error) {
           console.error("Error fetching exercises:", error);
-          // Handle error, e.g., show an error message or set a default state
         }
       };
       fetchExercises();
@@ -74,7 +72,6 @@ const VocabularyMode = () => {
       return response.data;
     } catch (error) {
       console.error("Error evaluating answer:", error);
-      // If there's an error, assume the answer is correct to let the user continue
       return { correct: true, feedback: "Answer assumed correct due to an error." };
     }
   };
@@ -119,6 +116,18 @@ const VocabularyMode = () => {
 
   const toggleReverse = () => {
     setReverse(!reverse);
+  };
+
+  // New function to handle difficulty update
+  const updateDifficulty = async (difficulty) => {
+    if (!currentExercise) return;
+    try {
+      await axios.put(`https://papiamentu-trainer-backend.azurewebsites.net/words/${currentExercise.id}/difficulty`, { difficulty });
+      // Provide feedback to the user, e.g., show a message or change button colors
+      console.log(`Word marked as ${difficulty}`);
+    } catch (error) {
+      console.error("Error updating difficulty:", error);
+    }
   };
 
   return (
@@ -172,6 +181,12 @@ const VocabularyMode = () => {
                   <button onClick={handleNextQuestion}>Next Question</button>
                 </div>
               )}
+              {/* New section to set difficulty level */}
+              <div className="difficulty-buttons">
+                <button onClick={() => updateDifficulty('easy')}>Easy</button>
+                <button onClick={() => updateDifficulty('medium')}>Medium</button>
+                <button onClick={() => updateDifficulty('difficult')}>Difficult</button>
+              </div>
             </div>
           )}
           {submitted && (
@@ -183,7 +198,7 @@ const VocabularyMode = () => {
                   {incorrectAnswers.map((exercise, index) => (
                     <div key={index} className="exercise">
                       <p>{exercise.papiamentu}</p>
-                      <p>Correct Answer: {exercise.answer}</p>
+                      <p>Correct Answer: {exercise.dutch}</p>
                     </div>
                   ))}
                   <button onClick={handleRedoIncorrectAnswers}>Redo Incorrect Answers</button>
