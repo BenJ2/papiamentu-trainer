@@ -17,6 +17,9 @@ const VocabularyMode = () => {
   const [reverse, setReverse] = useState(false);
   const [loading, setLoading] = useState(false);
   const [redoingIncorrectAnswers, setRedoingIncorrectAnswers] = useState(false);
+  const [difficultyFeedback, setDifficultyFeedback] = useState(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState(null);
+  const [currentExerciseDifficulty, setCurrentExerciseDifficulty] = useState(null);
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -32,26 +35,34 @@ const VocabularyMode = () => {
 
   useEffect(() => {
     if (currentLesson) {
-      const fetchExercises = async () => {
-        try {
-          const response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/words`);
-          const exercises = response.data.data;
-          setRemainingExercises(exercises);
-          setTotalQuestions(exercises.length);
-          if (exercises.length > 0) {
-            setRandomExercise(exercises);
-          }
-        } catch (error) {
-          console.error("Error fetching exercises:", error);
-        }
-      };
-      fetchExercises();
+      fetchExercises(selectedDifficulty);
     }
-  }, [currentLesson]);
+  }, [currentLesson, selectedDifficulty]);
+
+  const fetchExercises = async (difficulty) => {
+    try {
+      let response;
+      if (difficulty) {
+        response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/words/filter?difficulty=${difficulty}`);
+      } else {
+        response = await axios.get(`https://papiamentu-trainer-backend.azurewebsites.net/lessons/${currentLesson.id}/words`);
+      }
+      const exercises = response.data.data;
+      setRemainingExercises(exercises);
+      setTotalQuestions(exercises.length);
+      if (exercises.length > 0) {
+        setRandomExercise(exercises);
+      }
+    } catch (error) {
+      console.error("Error fetching exercises:", error);
+    }
+  };
 
   const setRandomExercise = (exercises) => {
     const randomIndex = Math.floor(Math.random() * exercises.length);
-    setCurrentExercise(exercises[randomIndex]);
+    const selectedExercise = exercises[randomIndex];
+    setCurrentExercise(selectedExercise);
+    setCurrentExerciseDifficulty(selectedExercise.difficulty); // Set the current exercise difficulty
     const updatedExercises = exercises.filter((_, index) => index !== randomIndex);
     setRemainingExercises(updatedExercises);
   };
@@ -94,6 +105,7 @@ const VocabularyMode = () => {
   const handleNextQuestion = () => {
     setShowFeedback(false);
     setAnswer('');
+    setDifficultyFeedback(null); // Reset difficulty feedback on next question
     if (remainingExercises.length > 0) {
       setRandomExercise(remainingExercises);
     } else if (redoingIncorrectAnswers && incorrectAnswers.length > 0) {
@@ -118,16 +130,20 @@ const VocabularyMode = () => {
     setReverse(!reverse);
   };
 
-  // New function to handle difficulty update
   const updateDifficulty = async (difficulty) => {
     if (!currentExercise) return;
     try {
       await axios.put(`https://papiamentu-trainer-backend.azurewebsites.net/words/${currentExercise.id}/difficulty`, { difficulty });
-      // Provide feedback to the user, e.g., show a message or change button colors
-      console.log(`Word marked as ${difficulty}`);
+      setCurrentExerciseDifficulty(difficulty); // Update the current exercise difficulty
+      setDifficultyFeedback(difficulty);
+      setTimeout(() => setDifficultyFeedback(null), 2000);
     } catch (error) {
       console.error("Error updating difficulty:", error);
     }
+  };
+
+  const applyDifficultyFilter = (difficulty) => {
+    setSelectedDifficulty(difficulty === selectedDifficulty ? null : difficulty);
   };
 
   return (
@@ -162,6 +178,26 @@ const VocabularyMode = () => {
             </label>
             <span>{reverse ? 'Translate Papiamentu to Dutch' : 'Translate Dutch to Papiamentu'}</span>
           </div>
+          <div className="filter-buttons">
+            <button 
+              className={`filter-button easy ${selectedDifficulty === 'easy' ? 'selected' : ''}`}
+              onClick={() => applyDifficultyFilter('easy')}
+            >
+              😊 Easy
+            </button>
+            <button 
+              className={`filter-button medium ${selectedDifficulty === 'medium' ? 'selected' : ''}`}
+              onClick={() => applyDifficultyFilter('medium')}
+            >
+              😐 Medium
+            </button>
+            <button 
+              className={`filter-button difficult ${selectedDifficulty === 'difficult' ? 'selected' : ''}`}
+              onClick={() => applyDifficultyFilter('difficult')}
+            >
+              😓 Difficult
+            </button>
+          </div>
           {currentExercise && !submitted && (
             <div className="exercise">
               <p>{reverse ? currentExercise.papiamentu : currentExercise.dutch}</p>
@@ -181,11 +217,25 @@ const VocabularyMode = () => {
                   <button onClick={handleNextQuestion}>Next Question</button>
                 </div>
               )}
-              {/* New section to set difficulty level */}
               <div className="difficulty-buttons">
-                <button onClick={() => updateDifficulty('easy')}>Easy</button>
-                <button onClick={() => updateDifficulty('medium')}>Medium</button>
-                <button onClick={() => updateDifficulty('difficult')}>Difficult</button>
+                <button 
+                  className={`difficulty-button easy ${currentExerciseDifficulty === 'easy' || difficultyFeedback === 'easy' ? 'selected' : ''}`}
+                  onClick={() => updateDifficulty('easy')}
+                >
+                  😊 Easy
+                </button>
+                <button 
+                  className={`difficulty-button medium ${currentExerciseDifficulty === 'medium' || difficultyFeedback === 'medium' ? 'selected' : ''}`}
+                  onClick={() => updateDifficulty('medium')}
+                >
+                  😐 Medium
+                </button>
+                <button 
+                  className={`difficulty-button difficult ${currentExerciseDifficulty === 'difficult' || difficultyFeedback === 'difficult' ? 'selected' : ''}`}
+                  onClick={() => updateDifficulty('difficult')}
+                >
+                  😓 Difficult
+                </button>
               </div>
             </div>
           )}
@@ -198,7 +248,7 @@ const VocabularyMode = () => {
                   {incorrectAnswers.map((exercise, index) => (
                     <div key={index} className="exercise">
                       <p>{exercise.papiamentu}</p>
-                      <p>Correct Answer: {exercise.dutch}</p>
+                      <p>Correct Answer: {exercise.answer}</p>
                     </div>
                   ))}
                   <button onClick={handleRedoIncorrectAnswers}>Redo Incorrect Answers</button>

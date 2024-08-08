@@ -48,3 +48,101 @@
     color: red;
   }
   
+  .lesson-mode {
+    padding: 20px;
+  }
+  
+  .lesson-list {
+    margin-bottom: 20px;
+  }
+  
+  .lesson-button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    border: none;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .lesson-button.active {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .toggle {
+    margin-right: 10px;
+  }
+  
+  .exercise {
+    margin-bottom: 20px;
+  }
+  
+  .feedback {
+    color: green;
+    margin-bottom: 10px;
+  }
+  
+  .difficulty-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .difficulty-button, .filter-button {
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+  }
+  
+  .difficulty-button.easy, .filter-button.easy {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .difficulty-button.medium, .filter-button.medium {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  
+  .difficulty-button.difficult, .filter-button.difficult {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  .difficulty-button.selected, .filter-button.selected {
+    border: 2px solid #007bff;
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .question-summary {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  
+  .summary-item {
+    font-size: 16px;
+  }
+  
+  .summary-item.correct {
+    color: green;
+  }
+  
+  .summary-item.incorrect {
+    color: red;
+  }
+  
+  .summary-item.remaining {
+    color: blue;
+  }
