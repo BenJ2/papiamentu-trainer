@@ -146,3 +146,65 @@
   .summary-item.remaining {
     color: blue;
   }
+
+  .filter-buttons {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  
+  .filter-button {
+    font-size: 14px;
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  
+  .filter-button.selected {
+    border-color: #007bff;
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  .difficulty-buttons {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  
+  .difficulty-button {
+    font-size: 14px;
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  
+  .difficulty-button.selected {
+    border-color: #28a745; /* Green for selected */
+    background-color: #28a745;
+    color: #fff;
+  }
+  
+  .difficulty-button.easy {
+    border-color: #d4edda;
+  }
+  
+  .difficulty-button.medium {
+    border-color: #ffeeba;
+  }
+  
+  .difficulty-button.difficult {
+    border-color: #f8d7da;
+  }
+  
+  .feedback {
+    color: #d9534f; /* Red for feedback */
+  }

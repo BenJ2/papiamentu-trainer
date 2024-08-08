@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './VocabularyMode.css';
 
@@ -33,13 +33,7 @@ const VocabularyMode = () => {
     fetchLessons();
   }, []);
 
-  useEffect(() => {
-    if (currentLesson) {
-      fetchExercises(selectedDifficulty);
-    }
-  }, [currentLesson, selectedDifficulty]);
-
-  const fetchExercises = async (difficulty) => {
+  const fetchExercises = useCallback(async (difficulty) => {
     try {
       let response;
       if (difficulty) {
@@ -56,7 +50,13 @@ const VocabularyMode = () => {
     } catch (error) {
       console.error("Error fetching exercises:", error);
     }
-  };
+  }, [currentLesson]);
+
+  useEffect(() => {
+    if (currentLesson) {
+      fetchExercises(selectedDifficulty);
+    }
+  }, [currentLesson, selectedDifficulty, fetchExercises]);
 
   const setRandomExercise = (exercises) => {
     const randomIndex = Math.floor(Math.random() * exercises.length);
