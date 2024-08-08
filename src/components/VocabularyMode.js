@@ -165,20 +165,10 @@ const VocabularyMode = () => {
           >
             {lesson.title}
           </button>
+          
         ))}
       </div>
-      {currentLesson && (
-        <div className="lesson-content">
-          <h3>{currentLesson.title}</h3>
-          <p>{currentLesson.description}</p>
-          <div className="toggle-container">
-            <label className="toggle">
-              <input type="checkbox" checked={reverse} onChange={toggleReverse} />
-              <span className="slider"></span>
-            </label>
-            <span>{reverse ? 'Translate Papiamentu to Dutch' : 'Translate Dutch to Papiamentu'}</span>
-          </div>
-          <div className="filter-buttons">
+      <div className="filter-buttons">
             <button 
               className={`filter-button easy ${selectedDifficulty === 'easy' ? 'selected' : ''}`}
               onClick={() => applyDifficultyFilter('easy')}
@@ -198,6 +188,18 @@ const VocabularyMode = () => {
               😓 Difficult
             </button>
           </div>
+      {currentLesson && (
+        <div className="lesson-content">
+          <h3>{currentLesson.title}</h3>
+          <p>{currentLesson.description}</p>
+          <div className="toggle-container">
+            <label className="toggle">
+              <input type="checkbox" checked={reverse} onChange={toggleReverse} />
+              <span className="slider"></span>
+            </label>
+            <span>{reverse ? 'Translate Papiamentu to Dutch' : 'Translate Dutch to Papiamentu'}</span>
+          </div>
+          
           {currentExercise && !submitted && (
             <div className="exercise">
               <p>{reverse ? currentExercise.papiamentu : currentExercise.dutch}</p>
